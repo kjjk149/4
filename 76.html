@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fish Voice Game</title>
+
+  <style>
+    body {
+      margin: 0;
+      text-align: center;
+      font-family: Arial, sans-serif;
+      background: #75d9f5;
+    }
+
+    h1 {
+      color: #064c70;
+    }
+
+    #game {
+      position: relative;
+      width: 600px;
+      max-width: 95%;
+      height: 350px;
+      margin: 20px auto;
+      overflow: hidden;
+      border: 3px solid #1686a8;
+      border-radius: 12px;
+      background: linear-gradient(#19bce8, #075d91 70%, #d8d1a1 70%);
+    }
+
+    #fish {
+      position: absolute;
+      left: 70px;
+      top: 150px;
+      font-size: 55px;
+      transition: top 0.2s;
+    }
+
+    #obstacle {
+      position: absolute;
+      right: 20px;
+      top: 140px;
+      font-size: 45px;
+    }
+
+    #score {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: white;
+      padding: 8px;
+      border-radius: 6px;
+      font-weight: bold;
+    }
+
+    #message {
+      color: #064c70;
+      font-weight: bold;
+    }
+
+    button {
+      padding: 12px 20px;
+      margin: 5px;
+      border: 0;
+      border-radius: 8px;
+      background: #ff8c32;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>🐠 Fish Voice Game</h1>
+  <p>Say "Up" or "Down" to move your fish!</p>
+
+  <div id="game">
+    <div id="score">Score: 0</div>
+    <div id="fish">🐠</div>
+    <div id="obstacle">🐡</div>
+  </div>
+
+  <button onclick="startGame()">Start Game</button>
+  <button onclick="listen()">🎤 Speak</button>
+  <button onclick="moveFish('up')">⬆ Up</button>
+  <button onclick="moveFish('down')">⬇ Down</button>
+
+  <p id="message">Click Start Game to begin.</p>
+
+  <script>
+    const fish = document.getElementById("fish");
+    const obstacle = document.getElementById("obstacle");
+    const scoreDisplay = document.getElementById("score");
+    const message = document.getElementById("message");
+
+    let y = 150;
+    let score = 0;
+    let playing = false;
+    let obstacleX = 520;
+    let gameTimer;
+
+    function startGame() {
+      clearInterval(gameTimer);
+
+      y = 150;
+      score = 0;
+      obstacleX = 520;
+      playing = true;
+
+      fish.style.top = y + "px";
+      obstacle.style.right = "20px";
+      scoreDisplay.textContent = "Score: 0";
+      message.textContent = 'Game started! Say "Up" or "Down".';
+
+      gameTimer = setInterval(updateGame, 50);
+    }
+
+    function moveFish(direction) {
+      if (!playing) {
+        message.textContent = "Click Start Game first!";
+        return;
+      }
+
+      if (direction === "up") {
+        y -= 30;
+        message.textContent = "Moving Up";
+      } else if (direction === "down") {
+        y += 30;
+        message.textContent = "Moving Down";
+      }
+
+      y = Math.max(0, Math.min(285, y));
+      fish.style.top = y + "px";
+    }
+
+    function listen() {
+      const SpeechRecognition =
+        window.SpeechRecognition ||
+        window.webkitSpeechRecognition;
+
+      if (!SpeechRecognition) {
+        message.textContent =
+          "Voice recognition is unavailable. Try Chrome or use the arrow buttons.";
+        return;
+      }
+
+      const recognition = new SpeechRecognition();
+      recognition.lang = "en-US";
+      recognition.interimResults = false;
+
+      message.textContent = "Listening...";
+
+      recognition.onresult = function(event) {
+        const command =
+          event.results[0][0].transcript.toLowerCase();
+
+        if (command.includes("up")) {
+          moveFish("up");
+        } else if (command.includes("down")) {
+          moveFish("down");
+        } else {
+          message.textContent =
+            "Didn't understand that. Please say it again!";
+        }
+      };
+
+      recognition.onerror = function() {
+        message.textContent = "Please try speaking again.";
+      };
+
+      recognition.start();
+    }
+
+    function updateGame() {
+      if (!playing) return;
+
+      obstacleX -= 5;
+      obstacle.style.right = (580 - obstacleX) + "px";
+
+      // Obstacle passes the fish
+      if (obstacleX < 90 && obstacleX > 30) {
+        if (y < 110 || y > 200) {
+          score++;
+          scoreDisplay.textContent = "Score: " + score;
+          obstacleX = -100;
+        } else {
+          playing = false;
+          clearInterval(gameTimer);
+          message.textContent = "Oops! You crashed. Final score: " + score;
+          return;
+        }
+      }
+
+      if (obstacleX < -50) {
+        obstacleX = 520;
+      }
+    }
+  </script>
+</body>
+</html>
